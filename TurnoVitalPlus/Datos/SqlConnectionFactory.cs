@@ -1,6 +1,5 @@
-﻿// Fábrica de conexiones ADO.NET lista para futuras operaciones contra BD.
-using System.Data;
-using System.Data.SqlClient;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;   // <-- paquete NuGet Microsoft.Data.SqlClient
 
 namespace TurnoVitalPlus
 {
@@ -16,8 +15,9 @@ namespace TurnoVitalPlus
 
         public IDbConnection Create()
         {
-            // Regresa la conexión sin abrir; los repos la abrirán al usarla.
+            // Se regresa cerrada; los repos abrirán/cerarrán
             return new SqlConnection(_connectionString);
         }
     }
 }
+

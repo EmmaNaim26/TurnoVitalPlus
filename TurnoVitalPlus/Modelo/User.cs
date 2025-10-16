@@ -1,5 +1,4 @@
-﻿// Representa al usuario autenticado y la info mostrada en el panel "Datos del Usuario".
-using System;
+﻿using System;
 
 namespace TurnoVitalPlus.Models
 {

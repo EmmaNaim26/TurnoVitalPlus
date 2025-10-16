@@ -1,6 +1,4 @@
-﻿// Ventana única de la aplicación. Contiene un panel donde se inyectan las vistas.
-// También aloja un "toast" simple para mensajes y responsabiliza el redimensionamiento fluido.
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 using TurnoVitalPlus.Controllers;
@@ -10,24 +8,20 @@ namespace TurnoVitalPlus
     public class MainForm : Form
     {
         private readonly RootController _root;
-        private readonly Panel _host;     // Contenedor central de vistas
-        private readonly Label _toast;    // Mensajes flotantes
+        private readonly Panel _host;
+        private readonly Label _toast;
 
         public MainForm(RootController root)
         {
             _root = root;
-
-            // Configura ventana principal
             Text = "Turno Vital+";
             MinimumSize = new Size(1000, 650);
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Color.WhiteSmoke;
 
-            // Panel host con Dock=Fill para ocupar todo el área
             _host = new Panel { Dock = DockStyle.Fill, BackColor = Color.White };
             Controls.Add(_host);
 
-            // Toast para retroalimentación no intrusiva
             _toast = new Label
             {
                 Visible = false,
@@ -38,14 +32,10 @@ namespace TurnoVitalPlus
             };
             Controls.Add(_toast);
 
-            // Evento de carga: el controlador arranca la app (muestra Login)
             Load += (_, __) => _root.Start();
-
-            // Reposiciona el toast cuando la ventana cambia de tamaño
             Resize += (_, __) => PositionToast();
         }
 
-        // Inyecta un UserControl al contenedor, asegurando una sola vista visible.
         public void ShowView(Control view)
         {
             _host.SuspendLayout();
@@ -55,15 +45,20 @@ namespace TurnoVitalPlus
             _host.ResumeLayout();
         }
 
-        // Muestra un mensaje temporal
         public void ShowToast(string message, int ms = 1800)
         {
             _toast.Text = message;
             _toast.Visible = true;
             PositionToast();
 
-            var timer = new Timer { Interval = ms };
-            timer.Tick += (_, __) => { _toast.Visible = false; timer.Stop(); timer.Dispose(); };
+            // <-- Usa el Timer de WinForms para evitar ambigüedad con System.Threading.Timer
+            var timer = new System.Windows.Forms.Timer { Interval = ms };
+            timer.Tick += (_, __) =>
+            {
+                _toast.Visible = false;
+                timer.Stop();
+                timer.Dispose();
+            };
             timer.Start();
         }
 

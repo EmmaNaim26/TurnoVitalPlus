@@ -1,5 +1,4 @@
-﻿// Representa una solicitud de turno/descanso extraordinario desde la vista "Solicitar turno".
-using System;
+﻿using System;
 
 namespace TurnoVitalPlus.Models
 {
