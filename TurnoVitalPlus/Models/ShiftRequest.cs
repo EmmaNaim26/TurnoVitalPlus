@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TurnoVitalPlus.Models
+namespace TurnoVitalPlus.Modelo
 {
     public class ShiftRequest
     {
