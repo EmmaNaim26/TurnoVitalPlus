@@ -17,7 +17,10 @@ namespace TurnoVitalPlus.Controlador
             _host = host;
         }
 
-        public void Start() => _host.ShowView(new LoginView(this));
+        public void Start()
+        {
+            _host.ShowView(new LoginView(this));
+        }
 
         public void TryLogin(string curp, string password)
         {
@@ -27,14 +30,11 @@ namespace TurnoVitalPlus.Controlador
                 _host.ShowToast("Usuario o contraseña incorrectos");
                 return;
             }
-            CurrentUser = user;
-            var schedule = _repos.Schedules.GetByUserId(user.Id);
-            _host.ShowView(new DashboardView(this, schedule));
-        }
 
-        public void OpenRegister()
-        {
-            _host.ShowView(new RegisterView(this));
+            CurrentUser = user;
+            // ✅ Ahora Dashboard recibe RootController + Usuario actual
+            var dashboard = new Dashboard(this, user);
+            _host.ShowView(dashboard);
         }
 
         public void Logout()
@@ -43,15 +43,31 @@ namespace TurnoVitalPlus.Controlador
             _host.ShowView(new LoginView(this));
         }
 
-        public void GoToSchedule() => _host.ShowView(new ScheduleView(this, _repos.Schedules.GetByUserId(CurrentUser?.Id ?? 0)));
-        public void GoToSpaces() => _host.ShowView(new SpacesView(this, _repos.Spaces, CurrentUser?.Id ?? 0));
-        public void GoToRequest() => _host.ShowView(new RequestView(this, _repos.Schedules));
+        public void GoToSchedule()
+        {
+            if (CurrentUser is null) return;
+            var schedule = _repos.Schedules.GetByUserId(CurrentUser.Id);
+            _host.ShowView(new ScheduleView(this, schedule));
+        }
+
+        public void GoToSpaces()
+        {
+            if (CurrentUser is null) return;
+            _host.ShowView(new SpacesView(this, _repos.Spaces, CurrentUser.Id));
+        }
+
+        public void GoToRequest()
+        {
+            _host.ShowView(new RequestView(this, _repos.Schedules));
+        }
+
         public void ApplyRequest(ShiftRequest req)
         {
             if (CurrentUser is null) return;
             _repos.Schedules.ApplyShiftRequest(CurrentUser.Id, req);
             _host.ShowToast("Solicitud aplicada");
-            _host.ShowView(new DashboardView(this, _repos.Schedules.GetByUserId(CurrentUser.Id)));
+            var dashboard = new Dashboard(this, CurrentUser);
+            _host.ShowView(dashboard);
         }
     }
 }

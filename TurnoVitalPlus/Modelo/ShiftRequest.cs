@@ -6,5 +6,6 @@ namespace TurnoVitalPlus.Modelo
     {
         public string Code { get; set; } = "";
         public DateTime RequestedAt { get; set; } = DateTime.Now;
+        public string Details { get; set; } = "";
     }
 }

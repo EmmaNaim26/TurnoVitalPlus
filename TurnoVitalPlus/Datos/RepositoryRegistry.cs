@@ -2,18 +2,19 @@
 {
     public class RepositoryRegistry
     {
-        public IUserRepository Users { get; init; }
-        public IScheduleRepository Schedules { get; init; }
-        public ISpacesRepository Spaces { get; init; }
+        public IUserRepository Users { get; }
+        public IScheduleRepository Schedules { get; }
+        public ISpacesRepository Spaces { get; }
 
-        public RepositoryRegistry(IUserRepository u, IScheduleRepository s, ISpacesRepository sp)
+        private RepositoryRegistry(IUserRepository users, IScheduleRepository schedules, ISpacesRepository spaces)
         {
-            Users = u; Schedules = s; Spaces = sp;
+            Users = users;
+            Schedules = schedules;
+            Spaces = spaces;
         }
 
         public static RepositoryRegistry Build(IConnectionFactory factory)
         {
-            // Devuelve repositorios MySQL por defecto (ya integrados)
             return new RepositoryRegistry(
                 new MySqlUserRepository(factory),
                 new MySqlScheduleRepository(factory),

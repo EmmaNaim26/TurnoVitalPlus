@@ -1,5 +1,4 @@
-﻿using System;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using TurnoVitalPlus.Modelo;
 
 namespace TurnoVitalPlus.Datos
@@ -12,7 +11,7 @@ namespace TurnoVitalPlus.Datos
         public Schedule GetByUserId(int userId)
         {
             var s = new Schedule();
-            using var cn = (MySqlConnection)_factory.Create();
+            using var cn = _factory.Create();
             cn.Open();
             using var cmd = new MySqlCommand("SELECT zone, shift_label, current_turn, rest_days_label, period_label, notes FROM schedules WHERE user_id=@id LIMIT 1", cn);
             cmd.Parameters.AddWithValue("@id", userId);
@@ -27,42 +26,39 @@ namespace TurnoVitalPlus.Datos
                 s.Notes = rd.IsDBNull(5) ? "" : rd.GetString(5);
             }
 
-            // Grid (optional) - assume schedule_grid exists
-            s.Grid = new string[4, 7];
+            // Fill simple grid if exists
             using (var cmd2 = new MySqlCommand("SELECT row_idx, col_idx, cell_text FROM schedule_grid WHERE user_id=@id", cn))
             {
                 cmd2.Parameters.AddWithValue("@id", userId);
                 using var rd2 = cmd2.ExecuteReader();
                 while (rd2.Read())
                 {
-                    var r = rd2.GetInt32("row_idx");
-                    var c = rd2.GetInt32("col_idx");
-                    var txt = rd2.IsDBNull(rd2.GetOrdinal("cell_text")) ? "" : rd2.GetString("cell_text");
-                    if (r >= 0 && r < 4 && c >= 0 && c < 7) s.Grid[r, c] = txt;
+                    int r = rd2.GetInt32("row_idx");
+                    int c = rd2.GetInt32("col_idx");
+                    if (r >= 0 && r < s.Grid.GetLength(0) && c >= 0 && c < s.Grid.GetLength(1))
+                        s.Grid[r, c] = rd2.IsDBNull(rd2.GetOrdinal("cell_text")) ? "" : rd2.GetString("cell_text");
                 }
             }
 
             return s;
         }
 
-        public void ApplyShiftRequest(int userId, ShiftRequest request)
+        public void ApplyShiftRequest(int userId, ShiftRequest req)
         {
-            using var cn = (MySqlConnection)_factory.Create();
+            using var cn = _factory.Create();
             cn.Open();
             using var tx = cn.BeginTransaction();
-            using (var cmd = new MySqlCommand("INSERT INTO shift_requests (user_id, code, requested_at) VALUES (@u,@c,NOW())", cn, tx))
-            {
-                cmd.Parameters.AddWithValue("@u", userId);
-                cmd.Parameters.AddWithValue("@c", request.Code);
-                cmd.ExecuteNonQuery();
-            }
+            using var cmd = new MySqlCommand("INSERT INTO shift_requests (user_id, code, requested_at, details) VALUES (@uid,@code,@dat,@det)", cn, tx);
+            cmd.Parameters.AddWithValue("@uid", userId);
+            cmd.Parameters.AddWithValue("@code", req.Code);
+            cmd.Parameters.AddWithValue("@dat", req.RequestedAt);
+            cmd.Parameters.AddWithValue("@det", req.Details);
+            cmd.ExecuteNonQuery();
 
-            using (var cmd2 = new MySqlCommand("UPDATE schedules SET notes=@n WHERE user_id=@u", cn, tx))
-            {
-                cmd2.Parameters.AddWithValue("@n", $"Última solicitud: {request.Code}");
-                cmd2.Parameters.AddWithValue("@u", userId);
-                cmd2.ExecuteNonQuery();
-            }
+            using var cmd2 = new MySqlCommand("UPDATE schedules SET notes = CONCAT(IFNULL(notes,''), '\nSolicitud: ', @code) WHERE user_id=@uid", cn, tx);
+            cmd2.Parameters.AddWithValue("@code", req.Code);
+            cmd2.Parameters.AddWithValue("@uid", userId);
+            cmd2.ExecuteNonQuery();
 
             tx.Commit();
         }

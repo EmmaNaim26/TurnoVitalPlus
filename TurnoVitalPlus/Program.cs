@@ -1,5 +1,10 @@
+using Proyecto.Controlador;
 using System;
+using System.Configuration;
 using System.Windows.Forms;
+using TurnoVitalPlus.Controlador;
+using TurnoVitalPlus.Datos;
+using TurnoVitalPlus.Vista;
 
 namespace TurnoVitalPlus
 {
@@ -8,8 +13,20 @@ namespace TurnoVitalPlus
         [STAThread]
         static void Main()
         {
-            ApplicationConfiguration.Initialize(); // .NET 6/8 WinForms
-            Application.Run(new MainForm());
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            string conn = ConfigurationManager.ConnectionStrings["TurnoVitalDb"].ConnectionString;
+            var factory = new MySqlConnectionFactory(conn);
+            var repos = RepositoryRegistry.Build(factory);
+
+            var main = new MainForm();
+            var root = new RootController(repos, main);
+
+            main.SetRootController(root);
+            root.Start();
+
+            Application.Run(main);
         }
     }
 }

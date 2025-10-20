@@ -11,7 +11,7 @@ namespace TurnoVitalPlus.Datos
         public IEnumerable<string> GetAvailableSpaces()
         {
             var list = new List<string>();
-            using var cn = (MySqlConnection)_factory.Create();
+            using var cn = _factory.Create();
             cn.Open();
             using var cmd = new MySqlCommand("SELECT name FROM spaces WHERE available=1", cn);
             using var rd = cmd.ExecuteReader();
@@ -22,7 +22,7 @@ namespace TurnoVitalPlus.Datos
         public IEnumerable<string> GetAvailableRestDays(int userId)
         {
             var list = new List<string>();
-            using var cn = (MySqlConnection)_factory.Create();
+            using var cn = _factory.Create();
             cn.Open();
             using var cmd = new MySqlCommand("SELECT day_label FROM rest_days WHERE user_id=@u", cn);
             cmd.Parameters.AddWithValue("@u", userId);
